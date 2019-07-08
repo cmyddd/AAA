@@ -1,0 +1,132 @@
+<html>    
+    <head>    
+        <title>空间对象几何特征编码</title>    
+        <meta name = "author" content = "10160306 王问尧">
+    </head>    
+    <body>               
+        选择文件 <input id="myNameFile" type="file" onchange="readNameFile()"/>  <br>  
+        <script type="text/Javascript">   
+            /**************************
+            *全局变量：
+            *格网数据，定义存储字的数组
+            ***************************/
+            var interval = 20;          //格网间隔
+            var gLength = interval*12;  //一块网格大小
+            var wordNum = 0;                //记录字数
+            var wordArray = new Array();    //存储字
+            
+            //创建画布
+            var myCanvas = document.createElement("canvas");       
+            myCanvas.id = "can";
+            document.body.appendChild(myCanvas);
+            
+            /*************************
+            *绘制字，包括两个函数：
+            *绘制网格、绘制
+            ***************************/
+            //根据字数绘制网格
+            function createGrid(num)
+            {
+                //设置画布网格格式
+                myCanvas.width = gLength * (num + 1) + 4;   //设置画布属性
+                myCanvas.height = gLength + 4;
+                var origin = 2;
+                var widGrid = num * 12;                     //设置网格竖线数量
+                var drawFigure = myCanvas.getContext("2d");
+
+                //绘制网格
+                drawFigure.lineWidth = 1;                           //设置线属性
+                drawFigure.strokeStyle = "gray";
+                //绘制竖线
+                for ( var i = 0; i <= widGrid ; i++)
+                {
+                    drawFigure.moveTo(origin + interval*i, 0);
+                    drawFigure.lineTo(origin + interval*i, 12*interval);
+                    drawFigure.stroke();                                
+                }        
+                //绘制横线
+                for ( var i = 0 ; i <= 12 ; i++)
+                {
+                    drawFigure.moveTo(origin , interval*i);
+                    drawFigure.lineTo(origin + widGrid*interval, interval*i);
+                    drawFigure.stroke();                                
+                }
+            }  
+            //绘制
+            function drawName(wordNum)
+            {
+                createGrid(wordNum);        //根据当前字数绘制网格
+                var drawFigure = myCanvas.getContext("2d");
+                drawFigure.lineWidth = 10;                          //设置字宽
+                drawFigure.strokeStyle = "blue";                    //设置字色
+                //遍历所有读取的字
+                for (var wNum = 0; wNum < wordNum; wNum++)          
+                {
+                    var sWidth = wNum * gLength;            //设置字的绘制位置起点
+                    var lines = wordArray[wNum];            //获取当前字的线数组
+                    for (var dLineNum = lines.length - 1; dLineNum >= 0; dLineNum--)
+                    {
+                        var line = lines[dLineNum];         //获取当前线的点数组
+                         //设置折线路径
+                        drawFigure.beginPath();            
+                        drawFigure.moveTo(sWidth + line[0][0]*interval,(12-line[0][1])*interval);
+                        for (var dPointNum = 1 ; dPointNum < line.length; dPointNum++)
+                            drawFigure.lineTo(sWidth + line[dPointNum][0]*interval,(12 - line[dPointNum][1])*interval);
+                        drawFigure.stroke();               //绘制线条
+                    }
+                }
+            }
+
+            /*********************************
+            *读取文件并转换数据，包括两个函数
+            *读取文件并绘制，将字符串转换为数字
+            **********************************/
+            //字符转为数字
+            function nameStr2nameXY(nameStr)
+            {
+                var lineNum = 0;        //记录已经读取行数
+                var pointNum = 0;       //记录当前线点数
+                var nameXY = new Array();  
+                var strs = nameStr.split("\n");     //设置分割
+                for (var i = 0; i < strs.length ;i++)
+                {
+                    if( i == 0)   //为第一条线增加存储空间
+                    {
+                        nameXY[lineNum] = new Array();
+                        i++;
+                    }
+                    if(strs[i].indexOf("END") >= 0)
+                    {
+                        if(strs[i+1].indexOf("END") >= 0)    //文件结束
+                            return nameXY;
+                        else                                //当前线段结束
+                        {
+                            nameXY[++lineNum] = new Array();
+                            i += 2;
+                            pointNum = 0;
+                        }
+                    }
+
+                    //将该点记录进入数组
+                    var XY = strs[i].split(',');
+                    nameXY[lineNum][pointNum] = new Array(2);       //分配存储空间
+                    nameXY[lineNum][pointNum][0] = parseFloat(XY[0]);
+                    nameXY[lineNum][pointNum++][1] = parseFloat(XY[1]);
+                }
+            }
+            //将文件读并绘制
+            function readNameFile()
+            {  
+                var nameFile = document.getElementById("myNameFile").files[0];  //获取文件
+                var reader=new FileReader();  
+                reader.readAsText(nameFile);  
+                reader.onload=function(e)  
+                {  
+                    wordArray[wordNum++] = nameStr2nameXY(this.result);      //提取文字并存入数组
+                    //document.write(wordArray[0]);
+                    drawName(wordNum);
+                }     
+            }
+        </script>     
+    </body>    
+</html>   
